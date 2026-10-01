@@ -48,6 +48,10 @@ self.addEventListener('install', (event) => {
 });
 
 // Evento de activación - limpiar caches antiguas
+// Solo borrar cachés de esta propia app (por prefijo): no tocar las cachés
+// del portal ni las de otras apps alojadas en subcarpetas del mismo dominio.
+const esCachePropia = (c) => c.startsWith('ean-');
+
 self.addEventListener('activate', (event) => {
     console.log('[SW] Service Worker activado');
     
@@ -58,9 +62,9 @@ self.addEventListener('activate', (event) => {
                     cacheNames
                         .filter((cacheName) => {
                             // Eliminar versiones antiguas del cache
-                            return cacheName !== STATIC_CACHE_NAME && 
-                                   cacheName !== DYNAMIC_CACHE_NAME &&
-                                   cacheName !== CACHE_NAME;
+                            return cacheName !== STATIC_CACHE_NAME && esCachePropia(cacheName) && 
+                                   cacheName !== DYNAMIC_CACHE_NAME && esCachePropia(cacheName) &&
+                                   cacheName !== CACHE_NAME && esCachePropia(cacheName);
                         })
                         .map((cacheName) => {
                             console.log('[SW] Eliminando cache antigua:', cacheName);
