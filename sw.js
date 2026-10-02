@@ -13,17 +13,17 @@ const DYNAMIC_CACHE_NAME = 'ean-dynamic-v1';
 // Recursos estáticos que se cachearán en la instalación
 const STATIC_ASSETS = [
     '/',
-    '/problemasean/',
-    '/problemasean/index.html',
-    '/problemasean/manifest.json',
-    '/problemasean/img/icon-72x72.png',
-    '/problemasean/img/icon-96x96.png',
-    '/problemasean/img/icon-128x128.png',
-    '/problemasean/img/icon-144x144.png',
-    '/problemasean/img/icon-152x152.png',
-    '/problemasean/img/icon-192x192.png',
-    '/problemasean/img/icon-384x384.png',
-    '/problemasean/img/icon-512x512.png',
+    './',
+    './index.html',
+    './manifest.json',
+    './img/icon-72x72.png',
+    './img/icon-96x96.png',
+    './img/icon-128x128.png',
+    './img/icon-144x144.png',
+    './img/icon-152x152.png',
+    './img/icon-192x192.png',
+    './img/icon-384x384.png',
+    './img/icon-512x512.png',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
 
@@ -145,7 +145,7 @@ async function cacheFirstStrategy(request) {
         
         // Retornar página offline si es una navegación
         if (request.mode === 'navigate') {
-            return caches.match('/problemasean/index.html');
+            return caches.match('./index.html');
         }
         
         throw error;
@@ -178,7 +178,7 @@ async function networkFirstStrategy(request) {
         
         // Retornar página principal como fallback
         if (request.mode === 'navigate') {
-            return caches.match('/problemasean/index.html');
+            return caches.match('./index.html');
         }
         
         throw error;
@@ -250,11 +250,11 @@ self.addEventListener('push', (event) => {
         
         const options = {
             body: data.body || 'Nueva actividad disponible',
-            icon: '/problemasean/img/icon-192x192.png',
-            badge: '/problemasean/img/icon-72x72.png',
+            icon: './img/icon-192x192.png',
+            badge: './img/icon-72x72.png',
             vibrate: [100, 50, 100],
             data: {
-                url: data.url || '/problemasean/'
+                url: data.url || './'
             }
         };
         
@@ -273,7 +273,7 @@ self.addEventListener('notificationclick', (event) => {
             .then((clientList) => {
                 // Si ya hay una ventana abierta, enfocarla
                 for (const client of clientList) {
-                    if (client.url.includes('/problemasean/') && 'focus' in client) {
+                    if (client.url.includes('./') && 'focus' in client) {
                         return client.focus();
                     }
                 }
