@@ -6,9 +6,9 @@
  * @version 1.0.0
  */
 
-const CACHE_NAME = 'ean-cache-v2';
-const STATIC_CACHE_NAME = 'ean-static-v1';
-const DYNAMIC_CACHE_NAME = 'ean-dynamic-v1';
+const CACHE_NAME = 'ean-cache-v2.1';
+const STATIC_CACHE_NAME = 'ean-static-v2.1';
+const DYNAMIC_CACHE_NAME = 'ean-dynamic-v2.1';
 
 // Recursos estáticos que se cachearán en la instalación
 const STATIC_ASSETS = [
