@@ -124,35 +124,73 @@
         .group-basic i { color: #059669; }
         .group-advanced i { color: #7c3aed; }
 
+        /* Contenedor del curso + chip de versión */
+        .header-badges {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .header-badges h2 {
+            margin: 0;
+        }
+
+        /* Chip dinámico de versión (la obtiene del Service Worker) */
+        .version-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 5px 14px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            color: #1d4ed8;
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.12);
+            cursor: default;
+            transition: all 0.25s ease;
+        }
+
+        .version-chip i {
+            font-size: 0.78rem;
+        }
+
+        .version-chip:hover {
+            transform: translateY(-1px);
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+        }
+
+        .version-chip.ready {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            animation: chip-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes chip-pop {
+            from { transform: scale(0.85); opacity: 0.3; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
     </style>
 </head>
 <body>
 
     <header>
-        <h1>PROBLEMAS DE ELECTRÓNICA ANALÓGICA<span id="app-version"></span></h1>
-        <h2>4º ESO</h2>
+        <h1>PROBLEMAS DE ELECTRÓNICA ANALÓGICA</h1>
+        <div class="header-badges">
+            <h2>4º ESO</h2>
+            <!-- Chip dinámico de versión: se rellena desde sw.js -->
+            <span id="version-chip" class="version-chip" role="status" title="Cargando versión…">
+                <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+                <span class="version-text">v…</span>
+            </span>
+        </div>
     </header>
-
-    <script>
-        // Obtener versión desde el Service Worker para que sea dinámica
-        if ('serviceWorker' in navigator && 'getPublicUpdateOnInstall' in window) {
-            // Intentar obtener la versión del SW global si está disponible
-            if (window.EAN_VERSION) {
-                document.getElementById('app-version').textContent = ` v${window.EAN_VERSION}`;
-            } else {
-                // Fallback: leer de manifest.json
-                fetch('manifest.json')
-                    .then(r => r.json())
-                    .then(m => {
-                        const versionMatch = m.description.match(/v?(\d+\.\d+(\.\d+)?)\b/);
-                        if (versionMatch) {
-                            document.getElementById('app-version').textContent = ` v${versionMatch[1]}`;
-                        }
-                    })
-                    .catch(() => {});
-            }
-        }
-    </script>
 
     <div class="grid-container">
         
@@ -259,9 +297,109 @@
     </footer>
 
 <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.log));
-  }
+  // Chip dinámico de versión: la versión se obtiene del sw.js
+  (function () {
+    'use strict';
+
+    const chip = document.getElementById('version-chip');
+    const chipText = chip ? chip.querySelector('.version-text') : null;
+    const chipIcon = chip ? chip.querySelector('i') : null;
+
+    // Muestra la versión recibida en el chip
+    function setVersion(version) {
+      chipText.textContent = `v${version}`;
+      chipIcon.className = 'fa-solid fa-code-branch';
+      chip.classList.add('ready');
+      chip.title = `Versión ${version} · obtenida de sw.js`;
+    }
+
+    // Si no se puede determinar la versión, se oculta el chip discretamente
+    function hideChip() {
+      if (chip) chip.style.display = 'none';
+    }
+
+    // 1) Fuente primaria: preguntar al Service Worker activo (postMessage)
+    function askServiceWorker() {
+      return new Promise((resolve, reject) => {
+        if (!('serviceWorker' in navigator)) {
+          reject(new Error('Service Worker no soportado'));
+          return;
+        }
+
+        // Timeout por si el SW tarda en activarse o no responde
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error('Sin respuesta del Service Worker'));
+        }, 1500);
+
+        const onMessage = (event) => {
+          if (event.data && event.data.type === 'VERSION') {
+            cleanup();
+            resolve(event.data.version);
+          }
+        };
+
+        const cleanup = () => {
+          clearTimeout(timer);
+          navigator.serviceWorker.removeEventListener('message', onMessage);
+        };
+
+        navigator.serviceWorker.ready
+          .then((registration) => {
+            const worker = registration.active || navigator.serviceWorker.controller;
+            if (!worker) {
+              cleanup();
+              reject(new Error('Service Worker inactivo'));
+              return;
+            }
+            navigator.serviceWorker.addEventListener('message', onMessage);
+            worker.postMessage({ type: 'GET_VERSION' });
+          })
+          .catch((error) => {
+            cleanup();
+            reject(error);
+          });
+      });
+    }
+
+    // 2) Plan B: leer el sw.js como texto y extraer la versión
+    function parseSWFile() {
+      return fetch('./sw.js', { cache: 'no-store' })
+        .then((response) => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return response.text();
+        })
+        .then((text) => {
+          const match = text.match(/(?:APP_VERSION|EAN_VERSION)\s*=\s*['"]([^'"]+)['"]/);
+          if (match) return match[1];
+          throw new Error('Versión no encontrada en sw.js');
+        });
+    }
+
+    // 3) Último recurso: extraerla de la descripción del manifest.json
+    function parseManifest() {
+      return fetch('manifest.json')
+        .then((r) => r.json())
+        .then((manifest) => {
+          const match = (manifest.description || '').match(/v?(\d+\.\d+(?:\.\d+)?)\b/);
+          if (match) return match[1];
+          throw new Error('Versión no encontrada en el manifest');
+        });
+    }
+
+    if (chip) {
+      askServiceWorker()
+        .catch(parseSWFile)
+        .catch(parseManifest)
+        .then(setVersion)
+        .catch(hideChip);
+    }
+
+    // Registro del Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.log));
+    }
+  })();
 </script>
 </body>
-</html>
+</html>
