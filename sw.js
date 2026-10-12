@@ -3,8 +3,11 @@
  * Proporciona funcionalidad offline y cacheo de recursos
  * 
  * @author Departamento de Tecnología - IES Virgen de Villadiego
- * @version 1.0.0
+ * @version 2.1.0
  */
+
+// Versión pública expuesta para la app PWA
+window.EAN_VERSION = '2.1.0';
 
 const CACHE_NAME = 'ean-cache-v2.1';
 const STATIC_CACHE_NAME = 'ean-static-v2.1';
