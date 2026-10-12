@@ -6,8 +6,10 @@
  * @version 2.1.0
  */
 
-// Versión pública expuesta para la app PWA
-window.EAN_VERSION = '2.1.0';
+// Única fuente de verdad de la versión de la aplicación.
+// El chip dinámico de index.html la solicita mediante postMessage
+// (mensaje de tipo 'GET_VERSION') y muestra aquí la respuesta.
+const APP_VERSION = '2.1.0';
 
 const CACHE_NAME = 'ean-cache-v2.1';
 const STATIC_CACHE_NAME = 'ean-static-v2.1';
@@ -215,6 +217,11 @@ async function staleWhileRevalidateStrategy(request) {
 
 // Escuchar mensajes desde la aplicación
 self.addEventListener('message', (event) => {
+    // Responder con la versión cuando el chip de index.html la solicite
+    if (event.data && event.data.type === 'GET_VERSION') {
+        event.source.postMessage({ type: 'VERSION', version: APP_VERSION });
+    }
+
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
