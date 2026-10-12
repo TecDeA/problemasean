@@ -129,9 +129,30 @@
 <body>
 
     <header>
-        <h1>PROBLEMAS DE ELECTRÓNICA ANALÓGICA</h1>
+        <h1>PROBLEMAS DE ELECTRÓNICA ANALÓGICA<span id="app-version"></span></h1>
         <h2>4º ESO</h2>
     </header>
+
+    <script>
+        // Obtener versión desde el Service Worker para que sea dinámica
+        if ('serviceWorker' in navigator && 'getPublicUpdateOnInstall' in window) {
+            // Intentar obtener la versión del SW global si está disponible
+            if (window.EAN_VERSION) {
+                document.getElementById('app-version').textContent = ` v${window.EAN_VERSION}`;
+            } else {
+                // Fallback: leer de manifest.json
+                fetch('manifest.json')
+                    .then(r => r.json())
+                    .then(m => {
+                        const versionMatch = m.description.match(/v?(\d+\.\d+(\.\d+)?)\b/);
+                        if (versionMatch) {
+                            document.getElementById('app-version').textContent = ` v${versionMatch[1]}`;
+                        }
+                    })
+                    .catch(() => {});
+            }
+        }
+    </script>
 
     <div class="grid-container">
         
