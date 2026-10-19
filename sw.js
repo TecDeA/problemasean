@@ -9,11 +9,11 @@
 // Única fuente de verdad de la versión de la aplicación.
 // El chip dinámico de index.html la solicita mediante postMessage
 // (mensaje de tipo 'GET_VERSION') y muestra aquí la respuesta.
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '2.2.0';
 
-const CACHE_NAME = 'ean-cache-v2.1';
-const STATIC_CACHE_NAME = 'ean-static-v2.1';
-const DYNAMIC_CACHE_NAME = 'ean-dynamic-v2.1';
+const CACHE_NAME = 'ean-cache-v2.2';
+const STATIC_CACHE_NAME = 'ean-static-v2.2';
+const DYNAMIC_CACHE_NAME = 'ean-dynamic-v2.2';
 
 // Recursos estáticos que se cachearán en la instalación
 const STATIC_ASSETS = [
